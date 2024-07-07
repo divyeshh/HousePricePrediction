@@ -1,6 +1,6 @@
 ---
-title: "Final project_Group17_houseprice"
-author: "Divyesh, Raj Charan, Preetham"
+title: "Final project_houseprice"
+author: "Divyesh"
 date: "2023-11-29"
 output: html_document
 ---
