@@ -1,0 +1,374 @@
+---
+title: "Final project_Group17_houseprice"
+author: "Divyesh, Raj Charan, Preetham"
+date: "2023-11-29"
+output: html_document
+---
+
+libraries:
+
+```{r}
+library(tidyverse) #for data manipulation, transformation, visualization, and modeling
+library(ggplot2) #for creating elegant and customizable visualizations in R.
+library(tigerstats) #descriptive statistics, probability distributions, hypothesis testing.
+library(MASS) #multivariate statistics, including linear and nonlinear regression.
+library(MLmetrics) #providing a variety of metrics for regression.
+```
+
+Importing Data:
+
+```{r cars}
+houseprice <- read.csv("C:/Users/Divyesh/Downloads/data.csv")
+```
+
+
+
+Observations:
+
+```{r}
+dim(houseprice)
+```
+
+```{r}
+head(houseprice)
+```
+
+
+DataTypes of the variables:
+
+```{r}
+str(houseprice)
+```
+
+Check for missing values:
+
+```{r}
+sum(is.na(houseprice))
+```
+
+Check for duplicate values:
+
+```{r}
+sum(duplicated(houseprice))
+```
+
+Summary:
+
+```{r}
+summary(houseprice)
+```
+
+
+                                             Exploratory Data Analysis
+
+Histograms:
+
+```{r}
+hist(houseprice$price, main = "Histogram of house prices",
+ xlab = "price of house",
+ ylab = "Frequency",
+ col = "blue",
+ border = "black",
+ breaks=100)
+
+```
+
+This histogram shows the distribution of price of houses in the dataset. 
+The x-axis represents the price of house, while the y-axis shows the frequency of each value or the count of individuals in each bin.
+
+From the plot, we can see that most of the house prices in the dataset are in the range of 0 to 1,000,000. The frequency of occurrence decreases as the price increase, which is expected as higher price values are less common.
+
+
+
+```{r}
+hist(houseprice$sqft_living
+     , breaks = 100, col = "blue", border = "black",
+ main = "Histogram of sqft_living", xlab = "sqft_living")
+```
+
+
+The histogram represents the distribution of the variable sqft_living in the houseprice dataset. The x-axis represents the range of sqft_living values and the y-axis represents the frequency of occurrence of the income values.
+
+From the histogram, we can see that most of the house with sqft of their living area is between 0 to 6000 sqft. The frequency of occurrence decreases as the sqft values increase, which is expected as higher sqft_living values are less in common.
+
+
+Boxplot:
+
+```{r}
+par(mfrow = c(1, 2))
+boxplot(houseprice$sqft_basement)
+abline(h = min(houseprice$sqft_basement), col = "Blue")
+abline(h = max(houseprice$sqft_basement), col = "Yellow")
+abline(h = median(houseprice$sqft_basement), col = "Green")
+abline(h = quantile(houseprice$sqft_basement, c(0.25, 0.75)), col = "Red")
+
+boxplot(houseprice$sqft_above)
+abline(h = min(houseprice$sqft_above), col = "Blue")
+abline(h = max(houseprice$sqft_above), col = "Yellow")
+abline(h = median(houseprice$sqft_above), col = "Green")
+abline(h = quantile(houseprice$sqft_above, c(0.25, 0.75)), col = "Red")
+
+```
+
+
+In the first boxplot Median sqft of basement is 0, which means half of the houses are without any basements. There are outliers with max sqft_basement of 4860 sqft.
+
+Second boxplot shows that the majority of houses have sqft_basement of 1k to 2.3k with meadian around 1.5k sqft, with a relatively wider IQR ranging from about 1190 to 2300 There are outliers with large sqft_above area of around 9410 sqft.
+
+
+Barplot:
+
+```{r}
+ggplot(houseprice, aes(x = condition)) +
+ geom_bar(fill = "red", color = "black") +
+ labs(x = "house condition", y = "Count", title = "condition of the houses")
+```
+
+This plot gives the no of houses in a particular level of condition.
+
+x-axis shows house condition level, while the y-axis represents the count of houses in each condition level category.
+
+From the graph we can see that most of the houses have 3rd level condition.
+
+
+Overlays:
+
+```{r}
+ggplot(houseprice, aes(x = city, y = price, color = condition)) +
+ geom_point() +
+ labs(x = "city", y = "price of house", color = "condition of house")+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
+There are also some outliers, such as high prices of houses with good condition.
+price of a house in kent city with very good condition(5) is 26,590,000.
+
+Overall, we can say that condition of the house may be a significant factor in determining price of house, but there does not seem to be any strong correlation between city and price of house as price is similar in all cities.
+
+
+                                                Hypothesis testing
+
+a) hypothesis test for ratio of the variances of two populations.(F- test)
+
+Null hypothesis: The ratio of the variances of the two populations(condition of houses with 5 and 4) is equal to 1.
+
+Alternative hypothesis: The ratio of the variances of the two populations is not equal to 1.
+
+```{r}
+good <- subset(houseprice, condition == "5")
+average <- subset(houseprice, condition == "4")
+var.test(good$price, average$price)
+
+```
+
+As P value is much less than alpha(0.05). we reject the null hypothesis that the ratio of the variances of the two populations is equal to 1. Therefore, we conclude that the variances of the condition of houses with 4 and 5 are not equal.
+
+b) Choosing the appropriate test to make a conclusion:
+
+Since we have rejected the null hypothesis that the variances of the two populations are equal, we should use a Welch’s t-test to compare the means of the two populations, since it does not assume equal variances.
+
+Null hypothesis: There is no significant difference in means of prices between levels of conditions 4 and 5.
+
+Alternative hypothesis: There is a significant difference in means of prices between levels of conditions 4 and 5.
+
+```{r}
+t.test(good$price, average$price, conf.level = 0.95)
+```
+
+We have alpha i.e., Confidence Interal as 95% (Default)
+
+From the t test result it is clear that p-value is much lesser the alpha value (0.05),
+Therefore we reject the Null Hypothesis and conclude that there is a significant difference in means of the prices between levels of conditions 4 and 5.
+
+
+
+                                                    Linear Regression
+
+
+```{r}
+cor(houseprice[,2:14])
+```
+
+Here we have excluded categorical data, highly correlated variables must have |r|>0.7
+
+sqft_above & sqft_living with r = |0.87|
+
+whereas with price we have better correlation with sqft_living r = |0.43|
+
+
+Splitting data set into 80:20 train and test data as houseTraining and houseTesting respectively
+
+```{r}
+Data = sample(2, nrow(houseprice), replace = TRUE, prob=c(0.8, 0.2))
+houseTraining= houseprice[Data == 1,]
+houseTesting= houseprice[Data==2,]
+dim(houseTraining)
+
+```
+
+```{r}
+dim(houseTesting)
+```
+
+Simple Linear Regression Model:
+
+In the houseprice data set, price is the target.
+
+```{r}
+simplemodel <- lm(price ~ sqft_living, data=houseTraining)
+summary(simplemodel)
+```
+
+
+There is a significant relationship between predictor(price) and response variable(sqft_living)
+
+As p value is close to 0 there is Significant relationship between Predictor and response
+Relationship between Predictor and response variable is “positive”.
+
+“Residual standard error” is an estimate of the standard deviation of the errors.
+
+“Multiple R-squared” is a measure of how well the model fits the data. The “Adjusted R-squared” is a modified version of the Multiple R-squared that takes into account the number of predictors in the model. The “F-statistic” is a measure of how well the model fits the data compared to a null model (i.e., a model with no predictors).
+
+In this case, the model has a very low p-value, indicating that it fits the data significantly better than the null model. However, the Multiple R-squared and Adjusted R-squared values are quite low, indicating that the “Sqft_living” variable is not a strong predictor of “Price”.
+
+```{r}
+simplemodel1 <- lm(price ~ view, data=houseTraining)
+summary(simplemodel1)
+```
+
+Using this model to predict price variable in houseTesting and calculate MAE and MSE .
+
+```{r}
+simpleprice_prediction <-predict(object = simplemodel, newdata = houseTesting)
+summary(simpleprice_prediction)
+
+MAE(y_pred = simpleprice_prediction, y_true = houseTesting$price)
+
+MSE(y_pred = simpleprice_prediction, y_true = houseTesting$price)
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(simplemodel, main = "Simple Linear Regression")
+```
+
+Multiple linear regression model:
+
+```{r}
+multimodel <- lm(price ~ ., data=houseTraining[,2:14])
+summary(multimodel)
+```
+
+Here response variable is price, and remaining all variables are predictors. The coefficients table shows that each predictor variable is statistically significant (pvalue < 0.05) and has a negative or positive effect on the response variable.
+
+The Adjusted R-squared value is also 0.1781, which means that the addition of the predictor variables does not improve the model fit much but comparitively better than linear regression Model.
+
+
+Using this model to predict ‘price’ in houseTesting and calculate MAE and MSE .
+
+```{r}
+multiprice_prediction <-predict(object = multimodel, newdata = houseTesting)
+summary(multiprice_prediction)
+
+MAE(y_pred = multiprice_prediction, y_true = houseTesting$price)
+
+MSE(y_pred = multiprice_prediction, y_true = houseTesting$price)
+```
+```{r}
+par(mfrow=c(2,2))
+plot(multimodel, main = "Multiple Linear Regression")
+```
+
+
+
+Subset Selection Linear Regression Model:
+
+Forward Stepwise:
+
+Begin with the null model — a model that contains an intercept but no predictors. Fit p simple linear regressions and add to the null model the variable that results in the lowest RSS. Add to that model the variable that results in the lowest RSS amongst all two-variable models. Continue until some stopping rule is satisfied, for example when all remaining variables have a p-value above some threshold.
+
+```{r}
+intercept_only <- lm(price ~ 1, data=houseTraining)
+# Create a full model
+all <- lm(price ~. , data=houseTraining[,2:14])
+# perform forward step-wise regression
+forward <- stepAIC (intercept_only, direction='forward',scope = formula(all))
+```
+
+
+```{r}
+forward$anova
+```
+
+
+```{r}
+summary(forward)
+```
+
+
+Using this model to predict price in houseTesting and calculate MAE and MSE.
+
+```{r}
+houseTesting$price <- as.numeric(as.character(houseTesting$price))
+```
+
+
+```{r}
+pred_forward <-predict(object = forward, newdata = houseTesting)
+summary(pred_forward)
+
+MAE(y_pred = pred_forward, y_true = houseTesting$price)
+
+MSE(y_pred = pred_forward, y_true = houseTesting$price)
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(forward, main = "Forward Stepwise Regression")
+```
+
+Backward Stepwise:
+
+Start with all variables in the model. Remove the variable with the largest p-value — that is, the variable that is the least statistically significant. The new (p−1) variable model is fit, and the variable with the largest p-value is removed. Continue until a stopping rule is reached. For instance, we may stop when all remaining variables have a significant p-value defined by some significance threshold. constructing a backward stepwise regression with houseTesting .
+
+
+```{r}
+backward <- stepAIC (all, direction='backward')
+```
+
+
+```{r}
+backward$anova
+```
+
+```{r}
+summary(backward)
+```
+
+Using this model to predict price in houseTesting and calculate MAE and MSE.
+
+```{r}
+pred_backward <-predict(object = backward, newdata = houseTesting)
+summary(pred_backward)
+
+MAE(y_pred = pred_backward, y_true = houseTesting$price)
+
+MSE(y_pred = pred_backward, y_true = houseTesting$price)
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(backward, main = "Backward Stepwise Regression")
+```
+
+Comparing all the linear regression models:
+
+If R^2 is greater indicates better model fit, measures the Proportion of variance depicted by model for adjusted number of predictors.
+
+RSE provides an absolute measure of lack of fit, lower value will be a better fit MAE is the avg absolute difference between the Actual values and Predictors. if MAE is lower indicates better model fit.
+
+MSE is the avg Squared difference between the Actual values and Predictors. if MSE is lower indicates better model fit.
+
+Forward Subset and Backward subset selection have the same results(RSE,MAE,MSE,R^2 )
+
+From the Above reasoning we can come to a conclusion that Subset Selection(Forward Subset and Backward subset selection) indicates better model fit having higher R^2 , Lower MAE & MSE compared to other models.
